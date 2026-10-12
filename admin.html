@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin პანელი - პრობლემების მართვა</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 font-sans p-6 text-gray-100">
 
     <!-- პაროლის მოთხოვნის მოდალური ფანჯარა -->
-    <div id="authModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div id="authModal" style="display: flex;" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4">
         <div class="bg-white text-gray-900 p-8 rounded-2xl shadow-2xl w-full max-w-md space-y-6">
             <div class="space-y-2">
                 <h2 class="text-2xl font-bold flex items-center gap-2 text-gray-900">
@@ -37,7 +37,7 @@
     </div>
 
     <!-- ძირითადი ადმინ პანელი -->
-    <div id="adminContent" class="max-w-full mx-auto space-y-6 hidden">
+    <div id="adminContent" style="display: none;" class="max-w-full mx-auto space-y-6">
         <div class="flex justify-between items-center">
             <h1 class="text-2xl font-bold text-white">Admin პანელი — პრობლემების მართვა</h1>
             <div class="flex items-center gap-3">
@@ -186,14 +186,14 @@
         }
 
         function checkPassword() {
-            const enteredPassword = document.getElementById('passwordInput').value;
-            if (enteredPassword === ADMIN_PASSWORD) {
-                document.getElementById('authModal').classList.add('hidden');
-                document.getElementById('adminContent').classList.remove('hidden');
+            const passwordInput = document.getElementById('passwordInput');
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
                 loadAndRenderAdmin();
             } else {
                 alert('არასწორი პაროლია!');
-                document.getElementById('passwordInput').value = '';
+                passwordInput.value = '';
             }
         }
 
@@ -305,3 +305,138 @@
                 tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">პრობლემები ვერ მოიძებნა</td></tr>`;
                 return;
             }
+
+            tbody.innerHTML = '';
+
+            filteredIssues.forEach(issue => {
+                let priorityBadge = '';
+                if (issue.priority === 'urgent') priorityBadge = '<span class="px-2 py-0.5 bg-red-950 text-red-300 rounded text-xs font-bold border border-red-800">Urgent</span>';
+                else if (issue.priority === 'high') priorityBadge = '<span class="px-2 py-0.5 bg-orange-950 text-orange-300 rounded text-xs font-bold border border-orange-800">High</span>';
+                else if (issue.priority === 'medium') priorityBadge = '<span class="px-2 py-0.5 bg-blue-950 text-blue-300 rounded text-xs font-bold border border-blue-800">Medium</span>';
+                else priorityBadge = '<span class="px-2 py-0.5 bg-gray-800 text-gray-300 rounded text-xs font-bold border border-gray-700">Low</span>';
+
+                let resolverOptions = `<option value="">აირჩიეთ...</option>`;
+                teamMembers.forEach(member => {
+                    const selected = issue.resolver === member ? 'selected' : '';
+                    resolverOptions += `<option value="${member}" ${selected}>${member}</option>`;
+                });
+
+                let statusColorClass = 'text-red-400';
+                if (issue.status === 'taken') statusColorClass = 'text-amber-400';
+                else if (issue.status === 'onsite') statusColorClass = 'text-purple-400';
+                else if (issue.status === 'closed') statusColorClass = 'text-emerald-400';
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 align-top whitespace-nowrap font-bold text-white">#${issue.id}</td>
+                    <td class="p-3 align-top text-gray-200 font-medium whitespace-nowrap">${issue.employee}</td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <span class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-xs font-semibold text-gray-300">${issue.department}</span>
+                    </td>
+                    <td class="p-3 align-top whitespace-nowrap">${priorityBadge}</td>
+                    <td class="p-3 align-top text-gray-300 break-words">${issue.description}</td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <select onchange="updateField(${issue.id}, 'assignee', this.value)" class="bg-gray-900 border border-gray-700 p-1.5 rounded text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+                            ${resolverOptions}
+                        </select>
+                    </td>
+                    <td class="p-3 align-top">
+                        <textarea rows="2" onchange="updateField(${issue.id}, 'comment', this.value)" placeholder="შენიშვნა..." class="w-full min-w-[180px] bg-gray-900 border border-gray-700 p-1.5 rounded text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-y">${issue.admin_comment || ''}</textarea>
+                    </td>
+                    <td class="p-3 align-top text-gray-400 text-xs whitespace-nowrap">${issue.created_at}</td>
+                    <td class="p-3 align-top text-gray-400 text-xs whitespace-nowrap">${issue.closed_at ? issue.closed_at : '-'}</td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <select onchange="updateField(${issue.id}, 'status', this.value)" class="border p-1.5 rounded text-xs font-bold cursor-pointer bg-gray-900 border-gray-700 focus:outline-none ${statusColorClass}">
+                            <option value="new" ${issue.status === 'new' ? 'selected' : ''}>new</option>
+                            <option value="taken" ${issue.status === 'taken' ? 'selected' : ''}>taken</option>
+                            <option value="onsite" ${issue.status === 'onsite' ? 'selected' : ''}>onsite</option>
+                            <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>closed</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateField(id, fieldType, value) {
+            let issue = globalIssues.find(i => Number(i.id) === Number(id));
+            if (!issue) return;
+
+            let payload = {
+                action: "update",
+                rowIndex: issue.rowIndex
+            };
+
+            if (fieldType === 'status') {
+                issue.status = value;
+                payload.status = value;
+            } else if (fieldType === 'assignee') {
+                issue.resolver = value;
+                payload.assignee = value;
+            } else if (fieldType === 'comment') {
+                issue.admin_comment = value;
+                payload.comment = value;
+            }
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                console.log("წარმატებით განახლდა ბაზაში!");
+                setTimeout(loadAndRenderAdmin, 1000);
+            }).catch(err => {
+                console.error("განახლების შეცდომა:", err);
+            });
+        }
+
+        function exportToExcel() {
+            const issues = getFilteredAndSortedIssues();
+            if (issues.length === 0) {
+                alert('ექსპორტისთვის მონაცემები არ მოიძებნა!');
+                return;
+            }
+
+            let csvContent = "\uFEFFID,ავტორი,დეპარტამენტი,პრიორიტეტი,აღწერა,შემსრულებელი,კომენტარი,შემოსვლის თარიღი,დასრულების თარიღი,სტატუსი\n";
+
+            issues.forEach(issue => {
+                let priorityText = 'Medium';
+                if (issue.priority === 'urgent') priorityText = 'Urgent';
+                else if (issue.priority === 'high') priorityText = 'High';
+                else if (issue.priority === 'low') priorityText = 'Low';
+
+                let row = [
+                    `#${issue.id}`,
+                    `"${(issue.employee || '').replace(/"/g, '""')}"`,
+                    `"${(issue.department || '').replace(/"/g, '""')}"`,
+                    `"${priorityText}"`,
+                    `"${(issue.description || '').replace(/"/g, '""')}"`,
+                    `"${(issue.resolver || '').replace(/"/g, '""')}"`,
+                    `"${(issue.admin_comment || '').replace(/"/g, '""')}"`,
+                    `"${(issue.created_at || '').replace(/"/g, '""')}"`,
+                    `"${(issue.closed_at || '-').replace(/"/g, '""')}"`,
+                    `"${(issue.status || '').replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href, a.href = url;
+            a.download = `helpdesk_report_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function clearAllIssues() {
+            if (confirm("ნამდვილად გსურთ ეკრანიდან მონაცემების გასუფთავება?")) {
+                globalIssues = [];
+                renderAdminTable();
+            }
+        }
+    </script>
+</body>
+</html>
