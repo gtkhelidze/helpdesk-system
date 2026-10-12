@@ -81,19 +81,21 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxPlpjHl_k4GPw0zYH2oPGhPaVP8cMG5oNBwwg6YTqK7DXuS-rcJ7nA7zaolGuOhL0I/exec";
 
         let allGlobalIssues = [];
+        let isSubmitting = false;
 
-        // Google Sheet-იდან ყველა ტიკეტის წამოღება
         function fetchGlobalIssues() {
             fetch(WEB_APP_URL)
                 .then(response => response.json())
                 .then(data => {
                     allGlobalIssues = data.map((row, index) => {
                         let priority = 'medium';
-                        let subjectText = row.Subject || '';
-                        if (subjectText.includes('Urgent')) priority = 'urgent';
-                        else if (subjectText.includes('High')) priority = 'high';
-                        else if (subjectText.includes('Medium')) priority = 'medium';
-                        else if (subjectText.includes('Low')) priority = 'low';
+                        let subjectText = (row.Subject || '').toLowerCase();
+                        
+                        // ზუსტი შემოწმება Subject სვეტიდან პრიორიტეტის გამოსატანად
+                        if (subjectText.includes('urgent')) priority = 'urgent';
+                        else if (subjectText.includes('high')) priority = 'high';
+                        else if (subjectText.includes('low')) priority = 'low';
+                        else if (subjectText.includes('medium')) priority = 'medium';
 
                         return {
                             id: data.length - index,
@@ -116,7 +118,6 @@
                 });
         }
 
-        // მხოლოდ მიმდინარე თანამშრომლის ტიკეტების გაფილტვრა და ჩვენება
         function filterMyIssues() {
             const currentEmployee = document.getElementById('employee').value.trim().toLowerCase();
             const tbody = document.getElementById('myIssuesTable');
@@ -167,16 +168,17 @@
             });
         }
 
-        // ახალი ტიკეტის გაგზავნა Google Sheet-ში
         document.getElementById('issueForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
+            if (isSubmitting) return;
+            isSubmitting = true;
+
             const employee = document.getElementById('employee').value.trim();
             const department = document.getElementById('department').value;
             const priority = document.getElementById('priority').value;
             const description = document.getElementById('description').value.trim();
             
-            // ვინახავთ სახელს ლოკალურად მხოლოდ იმისთვის, რომ მომავალში ავტომატურად ჩაიწეროს ფორმაში
             localStorage.setItem('helpdesk_last_employee', employee);
 
             const sheetData = {
@@ -208,22 +210,21 @@
 
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'პრობლემის გაგზავნა';
+                isSubmitting = false;
 
-                // მალევე ვტვირთავთ განახლებულ სიას ბაზიდან
-                setTimeout(fetchGlobalIssues, 1000);
+                setTimeout(fetchGlobalIssues, 1500);
             })
             .catch(error => {
                 console.error('შეცდომა:', error);
                 alert('ბაზაში გაგზავნისას მოხდა შეცდომა.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'პრობლემის გაგზავნა';
+                isSubmitting = false;
             });
         });
 
-        // ავტომატური განახლება ყოველ 5 წამში ფონურ რეჟიმში, რომ სტატუსების ცვლილებაც ჩანდეს
         setInterval(fetchGlobalIssues, 5000);
 
-        // გვერდის ჩატვირთვისას
         window.addEventListener('DOMContentLoaded', () => {
             const savedEmployee = localStorage.getItem('helpdesk_last_employee');
             if (savedEmployee) {
