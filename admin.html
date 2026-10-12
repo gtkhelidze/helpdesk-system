@@ -95,8 +95,8 @@
             </div>
         </div>
 
-        <!-- ფილტრები -->
-        <div class="bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-700 grid grid-cols-1 md:grid-cols-5 gap-4">
+        <!-- ფილტრები (დაბრუნდა პრიორიტეტის ფილტრიც) -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
             <div>
                 <label class="block text-xs font-medium text-gray-400 mb-1">ძებნა</label>
                 <input type="text" id="searchInput" oninput="renderAdminTable()" placeholder="მოძებნე..." class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
@@ -107,6 +107,16 @@
                     <option value="">ყველა დეპარტამენტი</option>
                     <option value="ბირჟა">ბირჟა</option>
                     <option value="დეპოზიტარი">დეპოზიტარი</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">პრიორიტეტი</label>
+                <select id="filterPriority" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="">ყველა პრიორიტეტი</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
                 </select>
             </div>
             <div>
@@ -253,14 +263,16 @@
 
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const filterDept = document.getElementById('filterDept').value;
+            const filterPriority = document.getElementById('filterPriority').value;
             const filterStatus = document.getElementById('filterStatus').value;
             const sortBy = document.getElementById('sortBy').value;
 
             let filtered = globalIssues.filter(issue => {
                 const matchSearch = issue.employee.toLowerCase().includes(searchText) || issue.description.toLowerCase().includes(searchText);
                 const matchDept = filterDept ? issue.department === filterDept : true;
+                const matchPriority = filterPriority ? issue.priority === filterPriority : true;
                 const matchStatus = filterStatus ? issue.status === filterStatus : true;
-                return matchSearch && matchDept && matchStatus;
+                return matchSearch && matchDept && matchPriority && matchStatus;
             });
 
             filtered.sort((a, b) => {
@@ -361,7 +373,6 @@
                 body: JSON.stringify(payload)
             }).then(() => {
                 console.log("წარმატებით განახლდა ბაზაში!");
-                // ოდნავი დაყოვნება, რომ ბაზამ მოასწროს ჩაწერა და მერე გადატვირთოს
                 setTimeout(loadAndRenderAdmin, 1000);
             }).catch(err => {
                 console.error("განახლების შეცდომა:", err);
