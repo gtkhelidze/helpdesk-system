@@ -78,7 +78,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzrzUhkCDI3XTuddguUzSrEfqpNv2RJooX_uR30wGVMfA918d2BHcd9odcRwWV_Exnv/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7KWvE-01anBf92EblP7Toobsjh241Dw65eRXcWT9HrZZcZJAfYwnjvexCjWah9PTx/exec";
 
         let allGlobalIssues = [];
         let isSubmitting = false;
@@ -91,7 +91,6 @@
                         let priority = 'medium';
                         let subjectText = (row.Subject || '').toLowerCase();
                         
-                        // ზუსტი შემოწმება Subject სვეტიდან პრიორიტეტის გამოსატანად
                         if (subjectText.includes('urgent')) priority = 'urgent';
                         else if (subjectText.includes('high')) priority = 'high';
                         else if (subjectText.includes('low')) priority = 'low';
@@ -184,6 +183,7 @@
             const sheetData = {
                 name: employee,
                 category: department,
+                priority: priority,
                 subject: "პრიორიტეტი: " + priority,
                 description: description,
                 status: "ახალი"
