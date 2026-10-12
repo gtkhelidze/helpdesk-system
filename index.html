@@ -78,7 +78,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7KWvE-01anBf92EblP7Toobsjh241Dw65eRXcWT9HrZZcZJAfYwnjvexCjWah9PTx/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQNF1dk2b7_Qz5rb8SKGXZeQcwVz-diEGq2Qp81Swve4ks3FWDRK0yDcVKmqItqXBV/exec";
 
         let allGlobalIssues = [];
         let isSubmitting = false;
@@ -106,7 +106,7 @@
                             status: (row.Status || 'ახალი').toLowerCase(),
                             resolver: row.Assignee || '',
                             admin_comment: row.Comment || '',
-                            closed_at: null
+                            closed_at: row.Closed_At ? new Date(row.Closed_At).toLocaleString() : ''
                         };
                     });
                     filterMyIssues();
