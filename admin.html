@@ -96,7 +96,7 @@
         </div>
 
         <!-- ფილტრები და დახარისხება -->
-        <div class="bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-700 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
             <div>
                 <label class="block text-xs font-medium text-gray-400 mb-1">ძებნა</label>
                 <input type="text" id="searchInput" oninput="renderAdminTable()" placeholder="მოძებნე..." class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
@@ -110,17 +110,7 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1">პრიორიტეტის ფილტრი</label>
-                <select id="filterPriority" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
-                    <option value="">ყველა პრიორიტეტი</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1">სტატუსის ფილტრი</label>
+                <label class="block text-xs font-medium text-gray-400 mb-1">სტატუსი</label>
                 <select id="filterStatus" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
                     <option value="">ყველა სტატუსი</option>
                     <option value="new">new</option>
@@ -134,7 +124,10 @@
                 <select id="sortBy" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
                     <option value="newest">ახალი (ჯერ პირველად)</option>
                     <option value="oldest">ძველი (ჯერ პირველად)</option>
-                    <option value="priority_desc">პრიორიტეტით (მაღალი ჯერ)</option>
+                    <option value="priority_urgent">პრიორიტეტი: Urgent პირველად</option>
+                    <option value="priority_high">პრიორიტეტი: High პირველად</option>
+                    <option value="priority_medium">პრიორიტეტი: Medium პირველად</option>
+                    <option value="priority_low">პრიორიტეტი: Low პირველად</option>
                     <option value="employee_asc">თანამშრომლის ანბანით (ა-ჰ)</option>
                 </select>
             </div>
@@ -264,26 +257,38 @@
 
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const filterDept = document.getElementById('filterDept').value;
-            const filterPriority = document.getElementById('filterPriority').value;
             const filterStatus = document.getElementById('filterStatus').value;
             const sortBy = document.getElementById('sortBy').value;
 
             let filtered = globalIssues.filter(issue => {
                 const matchSearch = issue.employee.toLowerCase().includes(searchText) || issue.description.toLowerCase().includes(searchText);
                 const matchDept = filterDept ? issue.department === filterDept : true;
-                const matchPriority = filterPriority ? issue.priority === filterPriority : true;
                 const matchStatus = filterStatus ? issue.status === filterStatus : true;
-                return matchSearch && matchDept && matchPriority && matchStatus;
+                return matchSearch && matchDept && matchStatus;
             });
-
-            // პრიორიტეტის წონები დახარისხებისთვის
-            const priorityWeight = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
 
             filtered.sort((a, b) => {
                 if (sortBy === 'newest') return b.id - a.id;
                 else if (sortBy === 'oldest') return a.id - b.id;
-                else if (sortBy === 'priority_desc') {
-                    return (priorityWeight[b.priority] || 2) - (priorityWeight[a.priority] || 2);
+                else if (sortBy === 'priority_urgent') {
+                    if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+                    if (b.priority === 'urgent' && a.priority !== 'urgent') return 1;
+                    return b.id - a.id;
+                }
+                else if (sortBy === 'priority_high') {
+                    if (a.priority === 'high' && b.priority !== 'high') return -1;
+                    if (b.priority === 'high' && a.priority !== 'high') return 1;
+                    return b.id - a.id;
+                }
+                else if (sortBy === 'priority_medium') {
+                    if (a.priority === 'medium' && b.priority !== 'medium') return -1;
+                    if (b.priority === 'medium' && a.priority !== 'medium') return 1;
+                    return b.id - a.id;
+                }
+                else if (sortBy === 'priority_low') {
+                    if (a.priority === 'low' && b.priority !== 'low') return -1;
+                    if (b.priority === 'low' && a.priority !== 'low') return 1;
+                    return b.id - a.id;
                 }
                 else if (sortBy === 'employee_asc') return a.employee.localeCompare(b.employee);
                 return b.id - a.id;
