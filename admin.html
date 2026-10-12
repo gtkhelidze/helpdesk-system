@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin პანელი - პრობლემების მართვა</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 font-sans p-6 text-gray-100">
+
+    <!-- პაროლის მოთხოვნის მოდალური ფანჯარა -->
+    <div id="authModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-white text-gray-900 p-8 rounded-2xl shadow-2xl w-full max-w-md space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-bold flex items-center gap-2 text-gray-900">
+                    <span>🔐</span> Admin Login
+                </h2>
+                <p class="text-sm text-gray-600">გთხოვთ, შეიყვანოთ პაროლი admin პანელზე.</p>
+            </div>
+            
+            <div class="relative">
+                <input type="password" id="passwordInput" placeholder="პაროლი" 
+                    class="w-full bg-white border border-gray-300 p-3 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 shadow-sm"
+                    onkeydown="if(event.key === 'Enter') checkPassword()">
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="checkPassword()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30 cursor-pointer">
+                    შესვლა
+                </button>
+                <button id="toggleBtn" onclick="togglePasswordVisibility()" class="bg-gray-800 text-white px-5 py-3 rounded-xl font-medium hover:bg-gray-700 transition-colors cursor-pointer text-sm">
+                    გამოჩენა
+                </button>
+            </div>
+
+            <p class="text-xs text-gray-500 text-center pt-2">ბრაუზერი დაიმახოვრებს მხოლოდ ამ სესიაზე.</p>
+        </div>
+    </div>
+
+    <!-- ძირითადი ადმინ პანელი -->
+    <div id="adminContent" class="max-w-full mx-auto space-y-6 hidden">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">Admin პანელი — პრობლემების მართვა</h1>
+            <div class="flex items-center gap-3">
+                <!-- ექსელის ღილაკი ლოგოთი -->
+                <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 shadow-sm">
+                    <svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
+                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                    </svg>
+                    ექსელის ექსპორტი
+                </button>
+                <button onclick="loadAndRenderAdmin()" class="bg-gray-800 border border-gray-700 text-gray-200 px-3 py-2 rounded-lg text-sm hover:bg-gray-700 transition-colors cursor-pointer">🔄 განახლება</button>
+                <a href="index.html" target="_blank" class="text-sm bg-gray-800 border border-gray-700 text-gray-200 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors">მთავარ გვერდზე გადასვლა ↗</a>
+            </div>
+        </div>
+
+        <!-- სტატისტიკის მცირე პანელი (Dashboard Cards) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 font-medium">სულ ტიკეტი</p>
+                    <h3 id="statTotal" class="text-2xl font-bold text-white mt-1">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-950 border border-blue-800 flex items-center justify-center text-blue-300 text-lg">📊</div>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 font-medium">ახალი (New)</p>
+                    <h3 id="statNew" class="text-2xl font-bold text-red-400 mt-1">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-red-950 border border-red-800 flex items-center justify-center text-red-300 text-lg">🔴</div>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 font-medium">მიღებული (Taken)</p>
+                    <h3 id="statTaken" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-amber-950 border border-amber-800 flex items-center justify-center text-amber-300 text-lg">🟡</div>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 font-medium">ადგილზეა (Onsite)</p>
+                    <h3 id="statOnsite" class="text-2xl font-bold text-purple-400 mt-1">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-purple-950 border border-purple-800 flex items-center justify-center text-purple-300 text-lg">🟣</div>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 p-4 rounded-xl shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 font-medium">დასრულებული (Closed)</p>
+                    <h3 id="statClosed" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-800 flex items-center justify-center text-emerald-300 text-lg">✅</div>
+            </div>
+        </div>
+
+        <!-- ფილტრებისა და ძებნის პანელი -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-700 grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">ძებნა (თანამშრომელი / აღწერა)</label>
+                <input type="text" id="searchInput" oninput="renderAdminTable()" placeholder="მოძებნე..." class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">დეპარტამენტი</label>
+                <select id="filterDept" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="">ყველა დეპარტამენტი</option>
+                    <option value="ბირჟა">ბირჟა</option>
+                    <option value="დეპოზიტარი">დეპოზიტარი</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">სტატუსი</label>
+                <select id="filterStatus" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="">ყველა სტატუსი</option>
+                    <option value="new">new</option>
+                    <option value="taken">taken</option>
+                    <option value="onsite">onsite</option>
+                    <option value="closed">closed</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1">დახარისხება</label>
+                <select id="sortBy" onchange="renderAdminTable()" class="w-full bg-gray-900 border border-gray-700 p-2 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
+                    <option value="newest">ახალი (ჯერ პირველად)</option>
+                    <option value="oldest">ძველი (ჯერ პირველად)</option>
+                    <option value="priority_urgent">პრიორიტეტი: Urgent პირველად</option>
+                    <option value="priority_high">პრიორიტეტი: High პირველად</option>
+                    <option value="priority_medium">პრიორიტეტი: Medium პირველად</option>
+                    <option value="priority_low">პრიორიტეტი: Low პირველად</option>
+                    <option value="employee_asc">თანამშრომლის ანბანით (ა-ჰ)</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="clearAllIssues()" class="w-full bg-red-950 border border-red-800 text-red-200 p-2 rounded-lg text-sm hover:bg-red-900 cursor-pointer transition-colors">მონაცემების გასუფთავება</button>
+            </div>
+        </div>
+
+        <!-- ცხრილი -->
+        <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+            <div>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-900/60 text-gray-400 text-sm border-b border-gray-700">
+                            <th class="p-3 whitespace-nowrap">ID</th>
+                            <th class="p-3 whitespace-nowrap">ავტორი</th>
+                            <th class="p-3 whitespace-nowrap">დეპარტამენტი</th>
+                            <th class="p-3 whitespace-nowrap">პრიორიტეტი</th>
+                            <th class="p-3">აღწერა</th>
+                            <th class="p-3 whitespace-nowrap">შემსრულებელი</th>
+                            <th class="p-3">კომენტარი / შენიშვნა</th>
+                            <th class="p-3 whitespace-nowrap">შემოსვლის თარიღი</th>
+                            <th class="p-3 whitespace-nowrap">დასრულების თარიღი</th>
+                            <th class="p-3 whitespace-nowrap">სტატუსი</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody" class="text-sm text-gray-300 divide-y divide-gray-700/40">
+                        <tr><td colspan="10" class="p-8 text-center text-gray-500">იტვირთება მონაცემები Google Sheet-იდან...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCHiOk65Iex1aw7lqg9P-EP_zuCt3N7eTm_H3n9PRMPRdROegyts_m5uzOXm43Sxxq/exec";
+        const ADMIN_PASSWORD = "admin123";
+
+        const teamMembers = [
+            "ამირან დემურაშვილი",
+            "გაიოზ თხელიძე"
+        ];
+
+        let globalIssues = [];
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleBtn = document.getElementById('toggleBtn');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = 'დამალვა';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = 'გამოჩენა';
+            }
+        }
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('passwordInput').value;
+            if (enteredPassword === ADMIN_PASSWORD) {
+                document.getElementById('authModal').classList.add('hidden');
+                document.getElementById('adminContent').classList.remove('hidden');
+                loadAndRenderAdmin();
+            } else {
+                alert('არასწორი პაროლია!');
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        function loadAndRenderAdmin() {
+            fetch(WEB_APP_URL)
+                .then(response => response.json())
+                .then(data => {
+                    globalIssues = data.map((row, index) => {
+                        let priority = 'medium';
+                        let subjectText = row.Subject || '';
+                        if (subjectText.includes('Urgent')) priority = 'urgent';
+                        else if (subjectText.includes('High')) priority = 'high';
+                        else if (subjectText.includes('Medium')) priority = 'medium';
+                        else if (subjectText.includes('Low')) priority = 'low';
+
+                        return {
+                            id: data.length - index,
+                            created_at: row.Timestamp ? new Date(row.Timestamp).toLocaleString() : '',
+                            employee: row.Name || '',
+                            department: row.Category || '',
+                            priority: priority,
+                            description: row.Description || '',
+                            status: row.Status === 'ახალი' ? 'new' : (row.Status || 'new'),
+                            resolver: '',
+                            admin_comment: '',
+                            closed_at: null
+                        };
+                    });
+                    renderAdminTable();
+                })
+                .catch(error => {
+                    console.error('მონაცემების ჩატვირთვის შეცდომა:', error);
+                    document.getElementById('adminTableBody').innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-400">ვერ მოხერხდა ბაზიდან მონაცემების წამოღება</td></tr>`;
+                });
+        }
+
+        function updateDashboardStats(allIssues) {
+            const total = allIssues.length;
+            const newCount = allIssues.filter(i => i.status === 'new').length;
+            const takenCount = allIssues.filter(i => i.status === 'taken').length;
+            const onsiteCount = allIssues.filter(i => i.status === 'onsite').length;
+            const closedCount = allIssues.filter(i => i.status === 'closed').length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statNew').textContent = newCount;
+            document.getElementById('statTaken').textContent = takenCount;
+            document.getElementById('statOnsite').textContent = onsiteCount;
+            document.getElementById('statClosed').textContent = closedCount;
+        }
+
+        function getFilteredAndSortedIssues() {
+            updateDashboardStats(globalIssues);
+
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const filterDept = document.getElementById('filterDept').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filtered = globalIssues.filter(issue => {
+                const matchSearch = issue.employee.toLowerCase().includes(searchText) || issue.description.toLowerCase().includes(searchText);
+                const matchDept = filterDept ? issue.department === filterDept : true;
+                const matchStatus = filterStatus ? issue.status === filterStatus : true;
+                return matchSearch && matchDept && matchStatus;
+            });
+
+            filtered.sort((a, b) => {
+                if (sortBy === 'newest') {
+                    return b.id - a.id;
+                } else if (sortBy === 'oldest') {
+                    return a.id - b.id;
+                } else if (sortBy === 'priority_urgent') {
+                    const order = { urgent: 1, high: 2, medium: 3, low: 4 };
+                    return (order[a.priority] || 5) - (order[b.priority] || 5);
+                } else if (sortBy === 'priority_high') {
+                    const order = { high: 1, urgent: 2, medium: 3, low: 4 };
+                    return (order[a.priority] || 5) - (order[b.priority] || 5);
+                } else if (sortBy === 'priority_medium') {
+                    const order = { medium: 1, high: 2, urgent: 3, low: 4 };
+                    return (order[a.priority] || 5) - (order[b.priority] || 5);
+                } else if (sortBy === 'priority_low') {
+                    const order = { low: 1, medium: 2, high: 3, urgent: 4 };
+                    return (order[a.priority] || 5) - (order[b.priority] || 5);
+                } else if (sortBy === 'employee_asc') {
+                    return a.employee.localeCompare(b.employee);
+                }
+            });
+
+            return filtered;
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            const filteredIssues = getFilteredAndSortedIssues();
+
+            if (filteredIssues.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">პრობლემები ვერ მოიძებნა</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            filteredIssues.forEach(issue => {
+                let priorityBadge = '';
+                if (issue.priority === 'urgent') priorityBadge = '<span class="px-2 py-0.5 bg-red-950 text-red-300 rounded text-xs font-bold border border-red-800">Urgent</span>';
+                else if (issue.priority === 'high') priorityBadge = '<span class="px-2 py-0.5 bg-orange-950 text-orange-300 rounded text-xs font-bold border border-orange-800">High</span>';
+                else if (issue.priority === 'medium') priorityBadge = '<span class="px-2 py-0.5 bg-blue-950 text-blue-300 rounded text-xs font-bold border border-blue-800">Medium</span>';
+                else priorityBadge = '<span class="px-2 py-0.5 bg-gray-800 text-gray-300 rounded text-xs font-bold border border-gray-700">Low</span>';
+
+                let resolverOptions = `<option value="">აირჩიეთ...</option>`;
+                teamMembers.forEach(member => {
+                    const selected = issue.resolver === member ? 'selected' : '';
+                    resolverOptions += `<option value="${member}" ${selected}>${member}</option>`;
+                });
+
+                let statusColorClass = 'text-red-400';
+                if (issue.status === 'taken') statusColorClass = 'text-amber-400';
+                else if (issue.status === 'onsite') statusColorClass = 'text-purple-400';
+                else if (issue.status === 'closed') statusColorClass = 'text-emerald-400';
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 align-top whitespace-nowrap font-bold text-white">#${issue.id}</td>
+                    <td class="p-3 align-top text-gray-200 font-medium whitespace-nowrap">${issue.employee}</td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <span class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-xs font-semibold text-gray-300">${issue.department}</span>
+                    </td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        ${priorityBadge}
+                    </td>
+                    <td class="p-3 align-top text-gray-300 break-words">${issue.description}</td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <select onchange="updateResolver(${issue.id}, this.value)" class="bg-gray-900 border border-gray-700 p-1.5 rounded text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+                            ${resolverOptions}
+                        </select>
+                    </td>
+                    <td class="p-3 align-top">
+                        <textarea rows="2" onchange="updateComment(${issue.id}, this.value)" placeholder="შენიშვნა..." class="w-full min-w-[180px] bg-gray-900 border border-gray-700 p-1.5 rounded text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-y">${issue.admin_comment || ''}</textarea>
+                    </td>
+                    <td class="p-3 align-top text-gray-400 text-xs whitespace-nowrap">${issue.created_at}</td>
+                    <td class="p-3 align-top text-gray-400 text-xs whitespace-nowrap">${issue.closed_at ? issue.closed_at : '-'}</td>
+                    <td class="p-3 align-top whitespace-nowrap">
+                        <select onchange="updateStatus(${issue.id}, this.value)" class="border p-1.5 rounded text-xs font-bold cursor-pointer bg-gray-900 border-gray-700 focus:outline-none ${statusColorClass}">
+                            <option value="new" ${issue.status === 'new' ? 'selected' : ''}>new</option>
+                            <option value="taken" ${issue.status === 'taken' ? 'selected' : ''}>taken</option>
+                            <option value="onsite" ${issue.status === 'onsite' ? 'selected' : ''}>onsite</option>
+                            <option value="closed" ${issue.status === 'closed' ? 'selected' : ''}>closed</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportToExcel() {
+            const issues = getFilteredAndSortedIssues();
+            if (issues.length === 0) {
+                alert('ექსპორტისთვის მონაცემები არ მოიძებნა!');
+                return;
+            }
+
+            let csvContent = "\uFEFFID,ავტორი,დეპარტამენტი,პრიორიტეტი,აღწერა,შემსრულებელი,კომენტარი,შემოსვლის თარიღი,დასრულების თარიღი,სტატუსი\n";
+
+            issues.forEach(issue => {
+                let priorityText = 'Low';
+                if (issue.priority === 'urgent') priorityText = 'Urgent';
+                else if (issue.priority === 'high') priorityText = 'High';
+                else if (issue.priority === 'medium') priorityText = 'Medium';
+
+                let row = [
+                    `#${issue.id}`,
+                    `"${(issue.employee || '').replace(/"/g, '""')}"`,
+                    `"${(issue.department || '').replace(/"/g, '""')}"`,
+                    `"${priorityText}"`,
+                    `"${(issue.description || '').replace(/"/g, '""')}"`,
+                    `"${(issue.resolver || '').replace(/"/g, '""')}"`,
+                    `"${(issue.admin_comment || '').replace(/"/g, '""')}"`,
+                    `"${(issue.created_at || '').replace(/"/g, '""')}"`,
+                    `"${(issue.closed_at || '-').replace(/"/g, '""')}"`,
+                    `"${(issue.status || '').replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `helpdesk_report_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function updateStatus(id, newStatus) {
+            let issue = globalIssues.find(i => Number(i.id) === Number(id));
+            if (issue) {
+                issue.status = newStatus;
+                if (newStatus === 'closed') {
+                    issue.closed_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                } else {
+                    issue.closed_at = null;
+                }
+                renderAdminTable();
+            }
+        }
+
+        function updateResolver(id, resolverName) {
+            let issue = globalIssues.find(i => Number(i.id) === Number(id));
+            if (issue) {
+                issue.resolver = resolverName;
+            }
+        }
+
+        function updateComment(id, commentText) {
+            let issue = globalIssues.find(i => Number(i.id) === Number(id));
+            if (issue) {
+                issue.admin_comment = commentText;
+            }
+        }
+
+        function clearAllIssues() {
+            if (confirm("ნამდვილად გსურთ ეკრანიდან მონაცემების გასუფთავება?")) {
+                globalIssues = [];
+                renderAdminTable();
+            }
+        }
+    </script>
+</body>
+</html>
