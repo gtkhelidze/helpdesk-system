@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzrzUhkCDI3XTuddguUzSrEfqpNv2RJooX_uR30wGVMfA918d2BHcd9odcRwWV_Exnv/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7KWvE-01anBf92EblP7Toobsjh241Dw65eRXcWT9HrZZcZJAfYwnjvexCjWah9PTx/exec";
         const ADMIN_PASSWORD = "admin123";
 
         const teamMembers = [
@@ -200,11 +200,12 @@
                 .then(data => {
                     globalIssues = data.map((row, index) => {
                         let priority = 'medium';
-                        let subjectText = row.Subject || '';
-                        if (subjectText.includes('Urgent')) priority = 'urgent';
-                        else if (subjectText.includes('High')) priority = 'high';
-                        else if (subjectText.includes('Medium')) priority = 'medium';
-                        else if (subjectText.includes('Low')) priority = 'low';
+                        let subjectText = (row.Subject || '').toLowerCase();
+                        
+                        if (subjectText.includes('urgent')) priority = 'urgent';
+                        else if (subjectText.includes('high')) priority = 'high';
+                        else if (subjectText.includes('low')) priority = 'low';
+                        else if (subjectText.includes('medium')) priority = 'medium';
 
                         let rawStatus = (row.Status || 'ახალი').toLowerCase();
                         let mappedStatus = 'new';
@@ -377,10 +378,10 @@
             let csvContent = "\uFEFFID,ავტორი,დეპარტამენტი,პრიორიტეტი,აღწერა,შემსრულებელი,კომენტარი,შემოსვლის თარიღი,დასრულების თარიღი,სტატუსი\n";
 
             issues.forEach(issue => {
-                let priorityText = 'Low';
+                let priorityText = 'Medium';
                 if (issue.priority === 'urgent') priorityText = 'Urgent';
                 else if (issue.priority === 'high') priorityText = 'High';
-                else if (issue.priority === 'medium') priorityText = 'Medium';
+                else if (issue.priority === 'low') priorityText = 'Low';
 
                 let row = [
                     `#${issue.id}`,
